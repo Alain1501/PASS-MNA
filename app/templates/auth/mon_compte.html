@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Mon compte — PASS Mobile MNA{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>Mon compte</h1>
+
+  <div class="field">
+    <label>Nom</label>
+    <div>{{ current_user.nom }}</div>
+  </div>
+  <div class="field">
+    <label>Email</label>
+    <div>{{ current_user.email }}</div>
+  </div>
+  <div class="field">
+    <label>Rôle</label>
+    <div><span class="badge badge-role">{{ current_user.role }}</span></div>
+  </div>
+
+  <h2>Changer mon mot de passe</h2>
+  <form method="POST">
+    <div class="field">
+      <label for="mot_de_passe_actuel">Mot de passe actuel</label>
+      <input type="password" id="mot_de_passe_actuel" name="mot_de_passe_actuel" required autofocus>
+    </div>
+    <div class="field">
+      <label for="nouveau_mot_de_passe">Nouveau mot de passe</label>
+      <input type="password" id="nouveau_mot_de_passe" name="nouveau_mot_de_passe" required minlength="8">
+    </div>
+    <div class="field">
+      <label for="confirmation">Confirmer le nouveau mot de passe</label>
+      <input type="password" id="confirmation" name="confirmation" required minlength="8">
+    </div>
+    <button type="submit" class="btn-primary" style="width:100%;">Mettre à jour le mot de passe</button>
+  </form>
+</div>
+{% endblock %}

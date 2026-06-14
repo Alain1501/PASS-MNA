@@ -17,7 +17,7 @@
       {% if current_user.is_admin %}
         <a href="{{ url_for('admin.index') }}">Administration</a>
       {% endif %}
-      <span class="topbar-user">{{ current_user.nom }} ({{ current_user.role }})</span>
+      <a href="{{ url_for('auth.mon_compte') }}" class="topbar-user">{{ current_user.nom }} ({{ current_user.role }})</a>
       <a href="{{ url_for('auth.logout') }}">Déconnexion</a>
     </div>
   </nav>

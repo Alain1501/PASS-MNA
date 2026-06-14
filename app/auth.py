@@ -39,6 +39,38 @@ def login():
     return render_template("auth/login.html")
 
 
+@auth_bp.route("/mon-compte", methods=["GET", "POST"])
+@login_required
+def mon_compte():
+    if request.method == "POST":
+        mot_de_passe_actuel = request.form.get("mot_de_passe_actuel") or ""
+        nouveau_mot_de_passe = request.form.get("nouveau_mot_de_passe") or ""
+        confirmation = request.form.get("confirmation") or ""
+
+        if not current_user.check_password(mot_de_passe_actuel):
+            flash("Le mot de passe actuel est incorrect.", "error")
+        elif len(nouveau_mot_de_passe) < 8:
+            flash("Le nouveau mot de passe doit contenir au moins 8 caractères.", "error")
+        elif nouveau_mot_de_passe != confirmation:
+            flash("Les deux mots de passe ne correspondent pas.", "error")
+        else:
+            current_user.set_password(nouveau_mot_de_passe)
+            db.session.add(
+                AuditLog(
+                    user_id=current_user.id,
+                    action="update",
+                    entite="user",
+                    entite_id=current_user.id,
+                    details={"champ": "password"},
+                )
+            )
+            db.session.commit()
+            flash("Votre mot de passe a été mis à jour.", "success")
+            return redirect(url_for("auth.mon_compte"))
+
+    return render_template("auth/mon_compte.html")
+
+
 @auth_bp.route("/logout")
 @login_required
 def logout():

@@ -440,6 +440,7 @@
               <tr><td>Sérologie syphilis</td><td><select id="syph_realise"><option value="">—</option><option>Oui</option><option>Non</option></select></td><td><input type="text" id="syph_date" class="exam-date"></td><td><select id="syph_result" class="exam-result"><option value="">—</option><option>Négatif</option><option>Positif</option><option>Indéterminé</option></select></td></tr>
               <tr><td>Chlamydia / Gonocoque</td><td><select id="chlam_realise"><option value="">—</option><option>Oui</option><option>Non</option></select></td><td><input type="text" id="chlam_date" class="exam-date"></td><td><select id="chlam_result" class="exam-result"><option value="">—</option><option>Négatif</option><option>Positif</option><option>Indéterminé</option></select></td></tr>
               <tr><td>Quantiféron</td><td><select id="quantif_realise"><option value="">—</option><option>Oui</option><option>Non</option></select></td><td><input type="text" id="quantif_date" class="exam-date"></td><td><select id="quantif_result" class="exam-result"><option value="">—</option><option>Négatif</option><option>Positif</option><option>Indéterminé</option></select></td></tr>
+              <tr><td>Bilharziose (sérologie)</td><td><select id="bilh_realise"><option value="">—</option><option>Oui</option><option>Non</option></select></td><td><input type="text" id="bilh_date" class="exam-date"></td><td><select id="bilh_result" class="exam-result"><option value="">—</option><option>Négatif</option><option>Positif</option><option>Indéterminé</option></select></td></tr>
               <tr><td>Radiographie pulmonaire</td><td><select id="rx_realise"><option value="">—</option><option>Oui</option><option>Non</option></select></td><td><input type="text" id="rx_date" class="exam-date"></td><td><select id="rx_result" class="exam-result"><option value="">—</option><option>Normal</option><option>Anormal</option><option>Indéterminé</option><option>Pas de compte rendu disponible</option></select></td></tr>
             </tbody>
           </table>
@@ -1023,24 +1024,33 @@ Elle ne signale pas d'antécédent d'IVG. Aucune contraception n'est actuellemen
 
     if (!items.length) return "Pas de bilan biologique ni d'imagerie réalisés avant la consultation.";
 
-    // Regrouper par date + résultat identiques
+    // Regrouper par date identique (les résultats de chaque examen restent distincts)
     const groupes = [];
     items.forEach(item => {
-      const key = item.date + "|" + item.result;
+      const key = item.date;
       const existing = groupes.find(g => g.key === key);
       if (existing) {
-        existing.labels.push(item.label);
+        existing.entries.push(item);
       } else {
-        groupes.push({ key, date: item.date, result: item.result, labels: [item.label] });
+        groupes.push({ key, date: item.date, entries: [item] });
       }
     });
 
     return groupes.map(g => {
-      const noms = g.labels.join(", ");
-      let ligne = noms + " : réalisé";
-      if (g.date) ligne += " " + formatApproxDate(g.date);
-      ligne += " →";
-      if (g.result) ligne += " " + g.result;
+      const datePart = g.date ? " " + formatApproxDate(g.date) : "";
+      if (g.entries.length === 1) {
+        const item = g.entries[0];
+        let ligne = item.label + " : réalisé" + datePart + " →";
+        if (item.result) ligne += " " + item.result;
+        return ligne;
+      }
+      // Plusieurs examens à la même date : ne pas répéter la date pour chacun
+      let ligne = "Réalisé" + datePart + " : ";
+      ligne += g.entries.map(item => {
+        let part = item.label;
+        if (item.result) part += " → " + item.result;
+        return part;
+      }).join(" ; ");
       return ligne;
     }).join("\n");
   }
@@ -1506,7 +1516,7 @@ Elle ne signale pas d'antécédent d'IVG. Aucune contraception n'est actuellemen
         addActive.push(entry);
       }
     });
-    if (addActive.length === 0 && (addUsage === "Jamais" || (!addUsage && addVoyage === "Non"))) {
+    if (addActive.length === 0) {
       lignes.push("Aucune addiction rapportée.");
     } else if (addActive.length > 0) {
       lignes.push("Consommation(s) rapportée(s) : " + addActive.join(" ; ") + ".");
@@ -1705,18 +1715,60 @@ Elle ne signale pas d'antécédent d'IVG. Aucune contraception n'est actuellemen
       lignes.push("- Création et mise à jour du carnet vaccinal : " + listeCarnet + ".");
     }
 
-    // ── Ligne 2 : Bilan CLAT — uniquement radiographie, Quantiféron et VIH ──
-    const rxStatut      = $v("dep_rx");
-    const quantifStatut = $v("dep_quantif");
-    const vihRealise    = $v("vih_realise");
+    // ── Ligne 2 : Bilan CLAT — Quantiféron, Bilharziose, radiographie pulmonaire ──
+    // Statut basé sur les données saisies dans la partie 6 (Examens complémentaires)
+    const clatExamens = [
+      { nom: "le Quantiféron",            realise: $v("quantif_realise"), date: $v("quantif_date"), result: $v("quantif_result") },
+      { nom: "la sérologie bilharziose",  realise: $v("bilh_realise"),    date: $v("bilh_date"),    result: $v("bilh_result")    },
+      { nom: "la radiographie pulmonaire", realise: $v("rx_realise"),     date: $v("rx_date"),      result: $v("rx_result")     }
+    ];
 
-    const bilanCLAT = [];
-    bilanCLAT.push("radiographie thoracique" + (rxStatut === "Déjà réalisé" ? " (déjà réalisée)" : ""));
-    bilanCLAT.push("Quantiféron" + (quantifStatut === "Déjà réalisé" ? " (déjà réalisé)" : ""));
-    bilanCLAT.push("sérologie VIH" + (vihRealise === "Oui" ? " (déjà réalisée)" : ""));
-    lignes.push("- Bilan CLAT : " + bilanCLAT.join(", ") + ".");
+    const clatRealises = clatExamens.filter(e => e.realise === "Oui");
+    const clatARealiser = clatExamens.filter(e => e.realise !== "Oui");
 
-    // ── Ligne 3 : Complément de bilan ──
+    const clatPhrases = [];
+
+    // Regrouper les examens déjà réalisés par date identique (même texte)
+    const clatGroupes = [];
+    clatRealises.forEach(e => {
+      const key = (e.date || "").trim();
+      const existing = clatGroupes.find(g => g.key === key);
+      if (existing) existing.entries.push(e);
+      else clatGroupes.push({ key, entries: [e] });
+    });
+
+    clatGroupes.forEach(g => {
+      const datePart = g.key ? " " + formatApproxDate(g.key) : "";
+      if (g.entries.length === 1) {
+        const e = g.entries[0];
+        let phrase = e.nom + " (déjà réalisé" + datePart;
+        if (e.result) phrase += ", résultat : " + e.result;
+        phrase += ")";
+        clatPhrases.push(phrase);
+      } else {
+        const noms = g.entries.map(e => e.nom);
+        const last = noms[noms.length - 1];
+        const listeNoms = noms.slice(0, -1).join(", ") + " et " + last;
+        const resultats = g.entries.map(e => e.result || "résultat non renseigné");
+        let phrase = listeNoms + " (déjà réalisés" + datePart + ", résultats respectifs : " + resultats.join(", ") + ")";
+        clatPhrases.push(phrase);
+      }
+    });
+
+    // Examens restant à réaliser
+    if (clatARealiser.length) {
+      const noms = clatARealiser.map(e => e.nom);
+      if (noms.length === 1) {
+        clatPhrases.push(noms[0] + " (à réaliser)");
+      } else {
+        const last = noms[noms.length - 1];
+        clatPhrases.push(noms.slice(0, -1).join(", ") + " et " + last + " (à réaliser)");
+      }
+    }
+
+    lignes.push("- Bilan CLAT : " + clatPhrases.join(" ; ") + ".");
+
+    // ── Ligne 3 : Complément de bilan — exclut les examens déjà inclus dans le bilan CLAT ──
     lignes.push("- Complément de bilan biologique MNA (bilan pré-vaccinal + IST).");
 
     // ── Vaccins après bilan — tous sur une seule ligne ──
