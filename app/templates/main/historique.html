@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Historique — {{ patient.nom_prenom or "Patient" }}{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <h1>🕑 Historique — {{ patient.nom_prenom or "Patient sans nom" }}</h1>
+  <div style="display:flex; gap:8px;">
+    <a href="{{ url_for('main.ouvrir_patient', patient_id=patient.id) }}" class="btn-primary">➕ Nouvelle consultation pour ce patient</a>
+    <a href="{{ url_for('main.dashboard') }}" class="btn-ghost">← Tableau de bord</a>
+  </div>
+</div>
+
+{% if not consultations %}
+  <p class="empty-state">Aucune consultation enregistrée pour ce patient.</p>
+{% else %}
+<div class="table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Date de consultation</th>
+        <th>Lieu</th>
+        <th>Auteur</th>
+        <th>Dernière modification</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in consultations %}
+      <tr>
+        <td>{{ c.date_consultation.strftime('%d/%m/%Y') if c.date_consultation else "—" }}</td>
+        <td>{{ c.lieu_consultation or "—" }}</td>
+        <td>{{ c.auteur.nom if c.auteur else "—" }}</td>
+        <td>{{ c.date_modification.strftime('%d/%m/%Y %H:%M') if c.date_modification else "—" }}</td>
+        <td class="actions-cell">
+          <a class="btn-secondary" style="padding:5px 12px;font-size:0.82rem;"
+             href="{{ url_for('main.ouvrir_patient', patient_id=patient.id) }}?consultation_id={{ c.id }}">
+            Ouvrir
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% endblock %}

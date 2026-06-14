@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Tableau de bord — PASS Mobile MNA{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <h1>📋 Dossiers patients MNA</h1>
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <input type="search" id="mp-search" class="search-box" placeholder="Rechercher (nom, date de naissance, lieu)…">
+    <a href="{{ url_for('main.nouvelle_consultation') }}" class="btn-primary">＋ Nouvelle consultation</a>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table class="data-table" id="patients-table">
+    <thead>
+      <tr>
+        <th>Nom / Prénom</th>
+        <th>Date de naissance</th>
+        <th>Dernière consultation</th>
+        <th>Lieu</th>
+        <th>Dernière modif.</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="patients-tbody">
+      <tr><td colspan="6" class="empty-state">Chargement…</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+function fmtDate(iso) {
+  if (!iso) return "—";
+  const [y, m, d] = iso.slice(0, 10).split("-");
+  return `${d}/${m}/${y}`;
+}
+
+async function chargerPatients(q) {
+  const tbody = document.getElementById("patients-tbody");
+  const url = "{{ url_for('api.list_patients') }}" + (q ? "?q=" + encodeURIComponent(q) : "");
+  const res = await fetch(url);
+  const patients = await res.json();
+
+  if (!patients.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Aucun patient enregistré.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = patients.map(p => `
+    <tr>
+      <td>${p.nom_prenom}</td>
+      <td>${fmtDate(p.date_naissance)}</td>
+      <td>${fmtDate(p.date_derniere_consultation)}</td>
+      <td>${p.lieu_derniere_consultation || "—"}</td>
+      <td>${fmtDate(p.date_modification)}</td>
+      <td class="actions-cell">
+        <a class="btn-primary" style="padding:5px 12px;font-size:0.82rem;" href="/patient/${p.id}">📂 Ouvrir</a>
+        <a class="btn-secondary" style="padding:5px 12px;font-size:0.82rem;" href="/patient/${p.id}/historique">🕑 Historique</a>
+      </td>
+    </tr>
+  `).join("");
+}
+
+document.getElementById("mp-search").addEventListener("input", e => {
+  chargerPatients(e.target.value);
+});
+
+chargerPatients();
+</script>
+
+{% endblock %}

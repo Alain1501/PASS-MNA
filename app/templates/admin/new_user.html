@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Nouveau compte — Administration{% endblock %}
+{% block content %}
+
+<div class="card">
+  <h2>＋ Nouveau compte utilisateur</h2>
+  <form method="POST">
+    <div class="field">
+      <label for="nom">Nom complet</label>
+      <input type="text" id="nom" name="nom" required autofocus>
+    </div>
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" required>
+    </div>
+    <div class="field">
+      <label for="role">Rôle</label>
+      <select id="role" name="role">
+        {% for value, label in roles %}
+          <option value="{{ value }}" {% if value == "medecin" %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <p style="font-size:0.82rem; color:var(--text-muted);">
+      Un mot de passe temporaire sera généré automatiquement et affiché une seule fois après la création.
+      Transmettez-le à l'utilisateur de façon sécurisée.
+    </p>
+    <div style="display:flex; gap:8px;">
+      <button type="submit" class="btn-primary">Créer le compte</button>
+      <a href="{{ url_for('admin.index') }}" class="btn-ghost">Annuler</a>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

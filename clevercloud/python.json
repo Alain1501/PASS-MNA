@@ -1,0 +1,11 @@
+{
+  "deploy": {
+    "pip-requirements-file": "requirements.txt"
+  },
+  "build": {
+    "post_build_hook": "python init_db.py"
+  },
+  "run": {
+    "command": "gunicorn -w 2 -b 0.0.0.0:$PORT wsgi:app"
+  }
+}

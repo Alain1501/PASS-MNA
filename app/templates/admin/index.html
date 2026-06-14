@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Administration — Comptes{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <h1>👤 Gestion des comptes</h1>
+  <div style="display:flex; gap:8px;">
+    <a href="{{ url_for('admin.audit') }}" class="btn-secondary">📜 Journal d'activité</a>
+    <a href="{{ url_for('admin.new_user') }}" class="btn-primary">＋ Nouveau compte</a>
+  </div>
+</div>
+
+<div class="table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Nom</th>
+        <th>Email</th>
+        <th>Rôle</th>
+        <th>Statut</th>
+        <th>Dernière connexion</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>{{ user.nom }}</td>
+        <td>{{ user.email }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('admin.change_role', user_id=user.id) }}" style="display:inline-flex; gap:6px; align-items:center;">
+            <select name="role" onchange="this.form.submit()">
+              {% for value, label in roles %}
+                <option value="{{ value }}" {% if user.role == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        </td>
+        <td>
+          {% if user.actif %}
+            <span class="badge badge-actif">Actif</span>
+          {% else %}
+            <span class="badge badge-inactif">Désactivé</span>
+          {% endif %}
+        </td>
+        <td>{{ user.derniere_connexion.strftime('%d/%m/%Y %H:%M') if user.derniere_connexion else "—" }}</td>
+        <td class="actions-cell">
+          <form method="POST" action="{{ url_for('admin.toggle_user', user_id=user.id) }}">
+            <button type="submit" class="btn-ghost" style="padding:5px 12px;font-size:0.82rem;">
+              {{ "Désactiver" if user.actif else "Réactiver" }}
+            </button>
+          </form>
+          <form method="POST" action="{{ url_for('admin.reset_password', user_id=user.id) }}"
+                onsubmit="return confirm('Générer un nouveau mot de passe temporaire pour {{ user.nom }} ?');">
+            <button type="submit" class="btn-secondary" style="padding:5px 12px;font-size:0.82rem;">
+              Réinitialiser mot de passe
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

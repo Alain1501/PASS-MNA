@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}PASS Mobile MNA{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  {% if current_user.is_authenticated %}
+  <nav class="topbar">
+    <div class="topbar-brand">PASS Mobile — Consultation MNA</div>
+    <div class="topbar-links">
+      <a href="{{ url_for('main.dashboard') }}">Tableau de bord</a>
+      {% if current_user.is_admin %}
+        <a href="{{ url_for('admin.index') }}">Administration</a>
+      {% endif %}
+      <span class="topbar-user">{{ current_user.nom }} ({{ current_user.role }})</span>
+      <a href="{{ url_for('auth.logout') }}">Déconnexion</a>
+    </div>
+  </nav>
+  {% endif %}
+
+  <div class="flash-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+</body>
+</html>

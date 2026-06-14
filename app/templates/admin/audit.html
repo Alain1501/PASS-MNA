@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Journal d'activité — Administration{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <h1>📜 Journal d'activité</h1>
+  <a href="{{ url_for('admin.index') }}" class="btn-ghost">← Comptes</a>
+</div>
+
+<p style="font-size:0.85rem; color:var(--text-muted);">Les 200 dernières actions enregistrées.</p>
+
+<div class="table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Date / heure</th>
+        <th>Utilisateur</th>
+        <th>Action</th>
+        <th>Entité</th>
+        <th>Détails</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td>{{ log.horodatage.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+        <td>{{ log.user.nom if log.user else "—" }}</td>
+        <td>{{ log.action }}</td>
+        <td>{{ log.entite }}{% if log.entite_id %} ({{ log.entite_id[:8] }}…){% endif %}</td>
+        <td>{{ log.details or "" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
